@@ -70,22 +70,14 @@ func UpdatePlayingField (pf *PlayingField) {
 	var yCoord float64 = 0
 	for i, line := range pf {
 		var xCoord float64 = 0
-
-		for j, column := range line{
-			isCellAlive := CheckIsCellAlive(column.xCoord, column.yCoord)
-			if !isCellAlive {
-				xCoord += 40
-				continue
-			} else if isCellAlive {
-				numOfNeighbors := CheckNumberOfNeighbors(i, j, pf)
-
-				if numOfNeighbors < 2 || numOfNeighbors > 3 {
-					pf[i][j].xCoord = 0
-					pf[i][j].yCoord = 0
-				} else {
-					pf[i][j].xCoord = xCoord
-					pf[i][j].yCoord = yCoord
-				}
+		for j, _ := range line {
+			numOfNeighbors := CheckNumberOfNeighbors(i, j, pf)
+			if numOfNeighbors < 2 || numOfNeighbors > 3 {
+				pf[i][j].xCoord = 0
+				pf[i][j].yCoord = 0
+			} else {
+				pf[i][j].xCoord = xCoord
+				pf[i][j].yCoord = yCoord
 			}
 			xCoord += 40
 		}
@@ -102,43 +94,48 @@ func CheckIsCellAlive (x float64, y float64 ) bool {
 
 func CheckNumberOfNeighbors (lineIndex int, columnIndex int, field *PlayingField) int {
 	neighborsCount := 0
-	if lineIndex > 0 && columnIndex > 0 {
-		if field[lineIndex-1][columnIndex-1].xCoord > 0 &&
-			field[lineIndex-1][columnIndex-1].yCoord > 0 {
-			neighborsCount += 1
-		}
+	if lineIndex > 0 && columnIndex > 0 &&
+		field[lineIndex-1][columnIndex-1].xCoord > 0 &&
+		field[lineIndex-1][columnIndex-1].yCoord > 0 {
+		neighborsCount += 1
 	}
-	if lineIndex > 0 {
-		if field[lineIndex-1][columnIndex].xCoord > 0 &&
-			field[lineIndex-1][columnIndex].yCoord > 0 {
-			neighborsCount += 1
-		}
-		if field[lineIndex-1][columnIndex+1].xCoord > 0 &&
-			field[lineIndex-1][columnIndex+1].yCoord > 0 {
-			neighborsCount += 1
-		}
+
+	if lineIndex > 0 &&
+		field[lineIndex-1][columnIndex].xCoord > 0 &&
+		field[lineIndex-1][columnIndex].yCoord > 0 {
+		neighborsCount += 1
 	}
-	if columnIndex > 0 {
-		if field[lineIndex][columnIndex-1].xCoord > 0 &&
-			field[lineIndex][columnIndex-1].yCoord > 0 {
-			neighborsCount += 1
-		}
+	if lineIndex > 0 && columnIndex < 9 &&
+		field[lineIndex-1][columnIndex+1].xCoord > 0 &&
+		field[lineIndex-1][columnIndex+1].yCoord > 0 {
+		neighborsCount += 1
 	}
-	if field[lineIndex][columnIndex + 1].xCoord > 0 &&
+
+	if columnIndex > 0 &&
+	field[lineIndex][columnIndex-1].xCoord > 0 &&
+		field[lineIndex][columnIndex-1].yCoord > 0 {
+		neighborsCount += 1
+	}
+
+	if columnIndex < 9 &&
+		field[lineIndex][columnIndex + 1].xCoord > 0 &&
 		field[lineIndex][columnIndex + 1].yCoord > 0 {
 		neighborsCount += 1
 	}
-	if columnIndex > 0 {
-		if field[lineIndex+1][columnIndex-1].xCoord > 0 &&
-			field[lineIndex+1][columnIndex-1].yCoord > 0 {
-			neighborsCount += 1
-		}
+
+	if columnIndex > 0 && lineIndex < 9 &&
+		field[lineIndex+1][columnIndex-1].xCoord > 0 &&
+		field[lineIndex+1][columnIndex-1].yCoord > 0 {
+		neighborsCount += 1
 	}
-	if field[lineIndex + 1][columnIndex].xCoord > 0 &&
+
+	if lineIndex < 9 &&
+		field[lineIndex + 1][columnIndex].xCoord > 0 &&
 		field[lineIndex + 1][columnIndex].yCoord > 0 {
 		neighborsCount += 1
 	}
-	if field[lineIndex + 1][columnIndex + 1].xCoord > 0 &&
+	if lineIndex < 9 && columnIndex < 9 &&
+		field[lineIndex + 1][columnIndex + 1].xCoord > 0 &&
 		field[lineIndex + 1][columnIndex + 1].yCoord > 0 {
 		neighborsCount += 1
 	}
