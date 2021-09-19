@@ -41,7 +41,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
 	for _, line := range &playingField {
 		for _, cell := range line {
-			ebitenutil.DrawRect(screen, cell.xCoord, cell.yCoord, 40, 40,  color.Black)
+			if cell.xCoord > 0 || cell.yCoord > 0 {
+				ebitenutil.DrawRect(screen, cell.xCoord, cell.yCoord, 40, 40,  color.Black)
+			}
 		}
 	}
 }
