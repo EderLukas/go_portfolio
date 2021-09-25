@@ -16,22 +16,20 @@ type PlayingField [10][10]struct{
 }
 
 var playingField = PlayingField{
-0:{1:{40,0}},
 1:{2:{80,40}},
-2:{0:{0,80}, 1:{40,80}, 2:{80,80}},
+2:{3:{120,80}},
+3:{1:{40,120}, 2:{80,120}, 3:{120,120}},
 }
-
-var firstIteration bool = true
+var nextGen = PlayingField{}
 
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
 func (g *Game) Update () error {
 	// Write your game's logical update.
-	if !firstIteration {
-		UpdatePlayingField(&playingField)
-	}
-	firstIteration = false
-	time.Sleep(1 * time.Second)
+	nextGen = UpdatePlayingField(playingField)
+	playingField = nextGen
+	nextGen = PlayingField{}
+	time.Sleep(500 * time.Millisecond)
 	return nil
 }
 
@@ -39,7 +37,7 @@ func (g *Game) Update () error {
 // Draw is called every frame (typically 1/60[s] for 60Hz display).
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
-	for _, line := range &playingField {
+	for _, line := range playingField {
 		for _, cell := range line {
 			if cell.xCoord > 0 || cell.yCoord > 0 {
 				ebitenutil.DrawRect(screen, cell.xCoord, cell.yCoord, 40, 40,  color.Black)
@@ -66,23 +64,35 @@ func main() {
 }
 
 // The game of life algorithm
-func UpdatePlayingField (pf *PlayingField) {
+func UpdatePlayingField (pf PlayingField) PlayingField {
+	nextGenPlayingField := PlayingField{}
+
 	var yCoord float64 = 0
 	for i, line := range pf {
 		var xCoord float64 = 0
 		for j, _ := range line {
-			numOfNeighbors := CheckNumberOfNeighbors(i, j, pf)
-			if numOfNeighbors < 2 || numOfNeighbors > 3 {
-				pf[i][j].xCoord = 0
-				pf[i][j].yCoord = 0
+			// ignore edges for neighbour counting
+			if i == 0 || j == 0 || i == len(pf) - 1 || j == len(line) - 1 {
+				nextGenPlayingField[i][j].xCoord = pf[i][j].xCoord
+				nextGenPlayingField[i][j].yCoord = pf[i][j].yCoord
 			} else {
-				pf[i][j].xCoord = xCoord
-				pf[i][j].yCoord = yCoord
+				numOfNeighbors := CheckNumberOfNeighbors(i, j, pf)
+				if numOfNeighbors == 3 {
+					nextGenPlayingField[i][j].xCoord = xCoord
+					nextGenPlayingField[i][j].yCoord = yCoord
+				} else if numOfNeighbors < 2 || numOfNeighbors > 3 {
+					nextGenPlayingField[i][j].xCoord = 0
+					nextGenPlayingField[i][j].yCoord = 0
+				} else {
+					nextGenPlayingField[i][j].xCoord = pf[i][j].xCoord
+					nextGenPlayingField[i][j].yCoord = pf[i][j].yCoord
+				}
 			}
 			xCoord += 40
 		}
 		yCoord += 40
 	}
+	return nextGenPlayingField
 }
 
 func CheckIsCellAlive (x float64, y float64 ) bool {
@@ -92,52 +102,19 @@ func CheckIsCellAlive (x float64, y float64 ) bool {
 	return false
 }
 
-func CheckNumberOfNeighbors (lineIndex int, columnIndex int, field *PlayingField) int {
+func CheckNumberOfNeighbors (lineIndex int, columnIndex int, field PlayingField) int {
 	neighborsCount := 0
-	if lineIndex > 0 && columnIndex > 0 &&
-		field[lineIndex-1][columnIndex-1].xCoord > 0 &&
-		field[lineIndex-1][columnIndex-1].yCoord > 0 {
-		neighborsCount += 1
+	for i := -1; i < 2; i++ {
+		for j := -1; j < 2; j++ {
+			if field[lineIndex + i][columnIndex + j].xCoord > 0 ||
+				field[lineIndex + i][columnIndex + j].yCoord > 0 {
+				neighborsCount += 1
+			}
+		}
 	}
 
-	if lineIndex > 0 &&
-		field[lineIndex-1][columnIndex].xCoord > 0 &&
-		field[lineIndex-1][columnIndex].yCoord > 0 {
-		neighborsCount += 1
-	}
-	if lineIndex > 0 && columnIndex < 9 &&
-		field[lineIndex-1][columnIndex+1].xCoord > 0 &&
-		field[lineIndex-1][columnIndex+1].yCoord > 0 {
-		neighborsCount += 1
-	}
+	// subtract the cell from which the checks are going out
+	neighborsCount -= 1
 
-	if columnIndex > 0 &&
-	field[lineIndex][columnIndex-1].xCoord > 0 &&
-		field[lineIndex][columnIndex-1].yCoord > 0 {
-		neighborsCount += 1
-	}
-
-	if columnIndex < 9 &&
-		field[lineIndex][columnIndex + 1].xCoord > 0 &&
-		field[lineIndex][columnIndex + 1].yCoord > 0 {
-		neighborsCount += 1
-	}
-
-	if columnIndex > 0 && lineIndex < 9 &&
-		field[lineIndex+1][columnIndex-1].xCoord > 0 &&
-		field[lineIndex+1][columnIndex-1].yCoord > 0 {
-		neighborsCount += 1
-	}
-
-	if lineIndex < 9 &&
-		field[lineIndex + 1][columnIndex].xCoord > 0 &&
-		field[lineIndex + 1][columnIndex].yCoord > 0 {
-		neighborsCount += 1
-	}
-	if lineIndex < 9 && columnIndex < 9 &&
-		field[lineIndex + 1][columnIndex + 1].xCoord > 0 &&
-		field[lineIndex + 1][columnIndex + 1].yCoord > 0 {
-		neighborsCount += 1
-	}
 	return neighborsCount
 }
