@@ -10,15 +10,15 @@ import (
 type Game struct{}
 
 // PlayingField Store
-type PlayingField [10][10]struct{
+type PlayingField [100][100]struct{
 	xCoord float64
 	yCoord float64
 }
 
 var playingField = PlayingField{
-1:{2:{80,40}},
-2:{3:{120,80}},
-3:{1:{40,120}, 2:{80,120}, 3:{120,120}},
+1:{2:{8,4}},
+2:{3:{12,8}},
+3:{1:{4,12}, 2:{8,12}, 3:{12,12}},
 }
 var nextGen = PlayingField{}
 
@@ -29,7 +29,7 @@ func (g *Game) Update () error {
 	nextGen = UpdatePlayingField(playingField)
 	playingField = nextGen
 	nextGen = PlayingField{}
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	return nil
 }
 
@@ -40,7 +40,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, line := range playingField {
 		for _, cell := range line {
 			if cell.xCoord > 0 || cell.yCoord > 0 {
-				ebitenutil.DrawRect(screen, cell.xCoord, cell.yCoord, 40, 40,  color.Black)
+				ebitenutil.DrawRect(screen, cell.xCoord, cell.yCoord, 4, 4,  color.Black)
 			}
 		}
 	}
@@ -70,13 +70,14 @@ func UpdatePlayingField (pf PlayingField) PlayingField {
 	var yCoord float64 = 0
 	for i, line := range pf {
 		var xCoord float64 = 0
-		for j, _ := range line {
+		for j, cell := range line {
 			// ignore edges for neighbour counting
 			if i == 0 || j == 0 || i == len(pf) - 1 || j == len(line) - 1 {
 				nextGenPlayingField[i][j].xCoord = pf[i][j].xCoord
 				nextGenPlayingField[i][j].yCoord = pf[i][j].yCoord
 			} else {
-				numOfNeighbors := CheckNumberOfNeighbors(i, j, pf)
+				isCellAlive := CheckIsCellAlive(cell.xCoord, cell.yCoord)
+				numOfNeighbors := CheckNumberOfNeighbors(i, j, pf, isCellAlive)
 				if numOfNeighbors == 3 {
 					nextGenPlayingField[i][j].xCoord = xCoord
 					nextGenPlayingField[i][j].yCoord = yCoord
@@ -88,9 +89,9 @@ func UpdatePlayingField (pf PlayingField) PlayingField {
 					nextGenPlayingField[i][j].yCoord = pf[i][j].yCoord
 				}
 			}
-			xCoord += 40
+			xCoord += 4
 		}
-		yCoord += 40
+		yCoord += 4
 	}
 	return nextGenPlayingField
 }
@@ -102,7 +103,7 @@ func CheckIsCellAlive (x float64, y float64 ) bool {
 	return false
 }
 
-func CheckNumberOfNeighbors (lineIndex int, columnIndex int, field PlayingField) int {
+func CheckNumberOfNeighbors (lineIndex int, columnIndex int, field PlayingField, alive bool) int {
 	neighborsCount := 0
 	for i := -1; i < 2; i++ {
 		for j := -1; j < 2; j++ {
@@ -114,7 +115,9 @@ func CheckNumberOfNeighbors (lineIndex int, columnIndex int, field PlayingField)
 	}
 
 	// subtract the cell from which the checks are going out
-	neighborsCount -= 1
+	if alive {
+		neighborsCount -= 1
+	}
 
 	return neighborsCount
 }
